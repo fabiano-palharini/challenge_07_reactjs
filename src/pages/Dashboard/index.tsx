@@ -9,6 +9,7 @@ import api from '../../services/api';
 import Header from '../../components/Header';
 
 import formatValue from '../../utils/formatValue';
+import formatDate from '../../utils/formatDate';
 
 import { Container, CardContainer, Card, TableContainer } from './styles';
 
@@ -20,7 +21,7 @@ interface Transaction {
   formattedDate: string;
   type: 'income' | 'outcome';
   category: { title: string };
-  created_at: Date;
+  created_at: string;
 }
 
 interface Balance {
@@ -35,22 +36,13 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadTransactions(): Promise<void> {
-      const response = await api.get('/transactions');
-      const respTransactions = response.data.transactions;
-      const respBalance = response.data.balance;
-      setTransactions([...transactions, respTransactions]);
-      setBalance(respBalance);
+      const { data } = await api.get('/transactions');
+      setTransactions(data.transactions);
+      setBalance(data.balance);
     }
 
     loadTransactions();
   }, []);
-
-  useEffect(() => {
-    console.log('fabiano transactions');
-    console.log(transactions);
-    console.log('fabiano balance');
-    console.log(balance);
-  }, [transactions]);
 
   return (
     <>
@@ -97,18 +89,26 @@ const Dashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="title">Computer</td>
-                <td className="income">R$ 5.000,00</td>
-                <td>Sell</td>
-                <td>20/04/2020</td>
-              </tr>
-              <tr>
-                <td className="title">Website Hosting</td>
-                <td className="outcome">- R$ 1.000,00</td>
-                <td>Hosting</td>
-                <td>19/04/2020</td>
-              </tr>
+              {transactions.map(
+                ({
+                  id,
+                  title,
+                  value,
+                  type,
+                  category,
+                  created_at: formattedDate,
+                }) => (
+                  <tr key={id}>
+                    <td className="title">{title}</td>
+                    <td className={type}>
+                      {type === 'outcome' ? '-' : ''}
+                      {formatValue(value)}
+                    </td>
+                    <td>{category.title}</td>
+                    <td>{formatDate(formattedDate)}</td>
+                  </tr>
+                ),
+              )}
             </tbody>
           </table>
         </TableContainer>
