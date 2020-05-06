@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import income from '../../assets/income.svg';
 import outcome from '../../assets/outcome.svg';
 import total from '../../assets/total.svg';
@@ -31,8 +31,44 @@ interface Balance {
 }
 
 const Dashboard: React.FC = () => {
+  const [currentColumn, setCurrentColumn] = useState<string>('');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balance, setBalance] = useState<Balance>({} as Balance);
+
+  function handleOrdering(
+    columnToBeOrdered: 'title' | 'value' | 'category' | 'created_at',
+  ): void {
+    if (columnToBeOrdered === currentColumn) {
+      const newTransactions = transactions.reverse();
+      setCurrentColumn('');
+      setTransactions(newTransactions);
+      return;
+    }
+
+    const newTransactions = transactions.sort((x, y) => {
+      let sort = 0;
+      if (columnToBeOrdered === 'value') sort = x.value - y.value;
+      if (columnToBeOrdered === 'category')
+        sort =
+          x.category.title.toLowerCase() < y.category.title.toLowerCase()
+            ? -1
+            : 1;
+      if (
+        x[columnToBeOrdered].toString().toLowerCase() <
+        y[columnToBeOrdered].toString().toLowerCase()
+      )
+        sort = -1;
+      if (
+        x[columnToBeOrdered].toString().toLowerCase() >
+        y[columnToBeOrdered].toString().toLowerCase()
+      )
+        sort = 1;
+      return sort;
+    });
+
+    setCurrentColumn(columnToBeOrdered);
+    setTransactions(newTransactions);
+  }
 
   useEffect(() => {
     async function loadTransactions(): Promise<void> {
@@ -82,10 +118,38 @@ const Dashboard: React.FC = () => {
           <table>
             <thead>
               <tr>
-                <th>Título</th>
-                <th>Preço</th>
-                <th>Categoria</th>
-                <th>Data</th>
+                <th onClick={() => handleOrdering('title')}>
+                  Título
+                  {currentColumn === 'title' ? (
+                    <FiChevronUp color="#FF872C" size={20} />
+                  ) : (
+                    <FiChevronDown color="#FF872C" size={20} />
+                  )}
+                </th>
+                <th onClick={() => handleOrdering('value')}>
+                  Preço
+                  {currentColumn === 'value' ? (
+                    <FiChevronUp color="#FF872C" size={20} />
+                  ) : (
+                    <FiChevronDown color="#FF872C" size={20} />
+                  )}
+                </th>
+                <th onClick={() => handleOrdering('category')}>
+                  Categoria
+                  {currentColumn === 'category' ? (
+                    <FiChevronUp color="#FF872C" size={20} />
+                  ) : (
+                    <FiChevronDown color="#FF872C" size={20} />
+                  )}
+                </th>
+                <th onClick={() => handleOrdering('created_at')}>
+                  Data
+                  {currentColumn === 'created_at' ? (
+                    <FiChevronUp color="#FF872C" size={20} />
+                  ) : (
+                    <FiChevronDown color="#FF872C" size={20} />
+                  )}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -101,7 +165,7 @@ const Dashboard: React.FC = () => {
                   <tr key={id}>
                     <td className="title">{title}</td>
                     <td className={type}>
-                      {type === 'outcome' ? '-' : ''}
+                      {type === 'outcome' ? '- ' : ''}
                       {formatValue(value)}
                     </td>
                     <td>{category.title}</td>
